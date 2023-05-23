@@ -1,0 +1,46 @@
+version: '3.8'
+
+volumes:
+    db-data:
+    pgadmin-data:
+
+services:
+    web:
+        container_name: flask_api_container
+        build: .
+        command: python manage.py run -h 0.0.0.0
+        volumes:
+            - ./:/usr/src/app/
+        ports:
+            - 5000:5000
+        env_file:
+            - app/.env.dev
+
+    db:
+        container_name: db_bewise
+        image: postgres:latest
+        restart: always
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: postgres_db
+            PGDATA: /var/lib/postgresql/data
+        ports:
+            - 5432:5432
+        volumes:
+            - db-data:/var/lib/postgresql/data
+
+    pgadmin:
+        container_name: pgadm_bewise
+        image: dpage/pgadmin4
+        restart: always
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@admin.com
+            PGADMIN_DEFAULT_PASSWORD: admin
+            PGADMIN_LISTEN_PORT: 80
+        depends_on:
+            - db
+        ports:
+            - 8080:80
+        volumes:
+            - pgadmin-data:/var/lib/pgadmin
