@@ -1,8 +1,9 @@
 
-from flask import Flask, jsonify, request, make_response, abort, current_app
+from flask import Flask, jsonify, request, make_response, abort, current_app, Response
 from flask import Blueprint
 import requests
 import json
+from typing import Callable, Tuple, Dict
 
 from app.models import Question
 from app import db
@@ -12,7 +13,20 @@ app_route = Blueprint('route', __name__)
 re_tags = re.compile(r'<[^>]+>')
 
 
+def response_msg(message: str, status: int, logger: Callable = None) -> Response:
+    """
+    Make response for abort function
+    """
+    logger(message)
+    return make_response(jsonify(message=message), status)
+
+
 def remove_tags(text: str) -> str:
+    """
+    remove html tags
+    :param text:
+    :return:
+    """
     return re_tags.sub('', text)
 
 
@@ -22,7 +36,7 @@ def index():
 
 
 @app_route.route('/api/questions', methods=['POST'])
-def get_question() -> tuple([dict, int]):
+def get_question() -> Response: #Tuple[Dict, int]:
 
     def request_questions(count: int = 1) -> list[dict]:
 
@@ -34,15 +48,13 @@ def get_question() -> tuple([dict, int]):
 
         # * abort if didn't get answers from jservice
         if not questions_data:
-            current_app.logger.error(f'The questions was not recieved')
-            abort(500)
+            raise Exception("The questions was not recieved")
 
         # * transform answer to dict
         try:
             _questions = json.loads(questions_data)
         except Exception as e:
-            current_app.logger.error(f'Error: {e}. Problem with converting recieved data')
-            abort(500)
+            raise Exception(f'Error: {e}. Problem with converting recieved data')
 
         # * check the number of questions received
         if len(_questions) != count:
@@ -64,7 +76,10 @@ def get_question() -> tuple([dict, int]):
     current_app.logger.debug(f"{payload=}")
 
     # * get questions from jservice
-    questions: list[dict] = request_questions(payload.get('questions_num'))
+    try:
+        questions: list[dict] = request_questions(payload.get('questions_num'))
+    except Exception as e:
+        return response_msg(e, 500,  current_app.logger.error)
 
     # * check for duplicates
     # get questions with ids from jservice answer from database
@@ -77,7 +92,10 @@ def get_question() -> tuple([dict, int]):
         while duplicates:
             current_app.logger.debug(f"{len(duplicates)} duplicates was recieved with ids: {duplicates}.")
             # get new questions
-            new_questions: list[dict] = request_questions(len(duplicates))
+            try:
+                new_questions: list[dict] = request_questions(len(duplicates))
+            except Exception as e:
+                return response_msg(e, 500, current_app.logger.error)
             # check for duplicates
             duplicates = Question.query.with_entities(Question.question_id).filter(
                 Question.question_id.in_([q["id"] for q in questions])).all()
@@ -100,11 +118,10 @@ def get_question() -> tuple([dict, int]):
     try:
         db.session.commit()
     except Exception as e:
-        current_app.logger.error(f'The error was occured while commiting to database')
-        abort(500)
+        return response_msg(e, 500, current_app.logger.error)
     else:
         current_app.logger.info(f'{len(questions)} questions was added to database')
-    return last_question.as_dict() if last_question else {}, 201
+    return make_response(last_question.as_dict() if last_question else {}, 201)
 
 
 @app_route.errorhandler(404)

@@ -29,8 +29,5 @@ login-web:
 	docker-compose -f docker-compose.yml exec web /bin/bash
 db-shell:
 	docker-compose -f docker-compose.yml exec db psql -Upostgres
-test:
-	$(if $(strip $(n)), \
-	curl -X POST http://127.0.0.1:5000/api/questions  -H "Content-Type: application/json" -d '{"questions_num" :$(n) }', \
-	curl -X POST http://127.0.0.1:5000/api/questions  -H "Content-Type: application/json" -d '{"questions_num" : 1 }')
-
+request:
+	curl -X POST http://127.0.0.1:5000/api/questions  -H "Content-Type: application/json" -d '{"questions_num" :$(n) }'
