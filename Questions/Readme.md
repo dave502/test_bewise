@@ -1,9 +1,71 @@
-start app
-$ export FLASK_APP=main.py
-$ flask run
+<h2 align="center">Задание №1 - Сервис для получения вопросов викторины</h2>
+<h3 align="center"> Инструкции по сборке и использованию</h3>
+Сервис состоит из трёх docker-контейнеров: <br>
+<ul>
+  <li> <b>web</b> - Flask-приложение для обработки api команд (http://127.0.0.1:5000) </li>
+  <li> <b>db</b> - СУБД Postgres для хранения полученных от web данных (http://127.0.0.1:5432) </li>
+  <li> <b>pgadmin</b> - PgAdmin4 для удобной работы с db (http://127.0.0.1:8080)</li>
+</ul>
 
-migrate db
-$ flask db init
-$ flask db migrate
-$ flask db upgrade
+В каталоге проекта имеется файл Makefile. Процесс сборки и другие опреации с контейнерами можно выполнять посредством обращения к нему с помощью утилиты make. <br>
+<h4 align="center">Основные команды для операций с образом приложения</h4>
+<ul>
+  <li/><b>make up</b> - развернуть сервис
+  <li/><b>make down</b> - остановить сервис, удалить контейнера, тома не удалять
+  <li/><b>make destroy</b> - остановить сервис, удалить контейнера вместо с томами
+  <li/><b>make build</b> - создать образы
+  <li/><b>db-shell</b> - запустить psql для bd
+  <li/><b>make logs</b> - посмотреть логи запущенных контейнеров
+  <li/><b>make help</b> - вывести список доступных команд
+  <li/><b>make test [n = < n >]</b> - выполнить запрос сервису, где < n > - это количество запрашиваемых вопросов
+ </ul>
+ 
+Можно обойтись без использования утилиты make, просто выполнив соответствующие команды из файла Makefile. <br><br>
+Как было уже указано выше, для выпонения запроса к сервису, следует выполнить команду ```$ mmake test```, при этом будет выполнен запрос на один вопрос.
+Можно использовать параметр n = < n > для запроса определённого количества вопросов, например, <br> ```$ make test n=3```<br>
+При этом выпонится команда <br>
+  *curl -X POST http://127.0.0.1:5000/api/questions  -H "Content-Type: application/json" -d '{"questions_num" :$(n) }'* <br><br>
+<h4>Таким образом, чтобы развернуть сервис и выполнить тест следует выполнить в корневом каталоге следующие команды:</h4>
+  <ol>
+    <li/> <b>make up</b>
+    <li/> <b>make test</b>
+  </ol>
+ 
+Конечно же, запросы можно выполнить с помощью приложений Insomnia, Postman, панели разработчика браузера и любыми другими доступными способами по адресу<br>
+   http://127.0.0.1:5000/api/questions <br>
+  Выполнив POST запрос с  данными в формате {"questions_num" : n }
+  
+Все сохранённые вопросы можно посмортеть с помощью программы psql, либо с помощью pgadmin4. <br><br>
+Для использования pgadmin4, необходимо авторизоваться по адресу http://127.0.0.1:8080 используя следующие данные: <br>
+            логин: admin@admin.com <br>
+            пароль: admin <br>
+Затем добавить новый сервер с параметрами <br>
+  Host name / address : pgadm_bewise<br>
+  User : postgres<br>
+  Password : postgres<br>
 
+<h4 align="center">Пример запроса из командной строки:</h4>
+# развёртывание сервиса<br>
+<code>make up</code><br>
+...<br>
+# Выполнение команды запроса<br>
+<code>make test n=4</code><br>
+# Ответ:<br>
+<code>{}</code><br>
+# Следующа команда:<br>
+<code>make test n=4</code><br>
+# Ответ:<br>
+<code>{
+  "answer": "Berlin",
+  "date": "Fri, 30 Dec 2022 18:47:25 GMT",
+  "id": 4,
+  "question": "After delivering over 2 mil. tons of supplies, the Allied airlift to this city ended Sept. 30",
+  "question_id": 23978
+}</code>
+
+<i><code>make test n=4</code> выполняет команду <code>curl -X POST http://127.0.0.1:5000/api/questions  -H "Content-Type: application/json" -d '{"questions_num" :4 }'</code></i>
+
+  
+  
+  
+  
