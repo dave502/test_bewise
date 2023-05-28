@@ -1,5 +1,5 @@
 THIS_FILE := $(lastword $(MAKEFILE_LIST))
-.PHONY: help build up start down destroy stop restart logs logs-api ps login-timescale login-api db-shell
+.PHONY: help build up start down destroy stop restart logs logs-api ps login-timescale login-api db-shell test
 build:
 	docker-compose -f docker-compose.yml build $(c)
 help:
