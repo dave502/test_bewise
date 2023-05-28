@@ -50,7 +50,7 @@ def main():
 
         if response.status_code == 200:
             print(f'file "{filename}" was received')
-            open(Path.cwd() / Path("mp3") / filename, 'wb').write(response.content)
+            open(Path.cwd() / Path("test") / Path("mp3") / filename, 'wb').write(response.content)
         else:
             print("Error")
     else:
